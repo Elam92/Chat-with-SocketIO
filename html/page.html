@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+    </head>
+    <body>
+        <section>
+          <div id="chat"></div>
+          <input type="text" id="name" placeholder="your name" />
+          <input type="text" id="input" disabled="disabled" />
+          <select id="users">
+            <option value="">all</option>
+          </select>
+        </section>
+        <script src="/socket.io/socket.io.js"></script>
+    <script>
+      window.onload = function() {
+        var Chat = (function() {
+
+          var addEventListener = function(obj, evt, fnc) {
+              if (obj.addEventListener) { // W3C model
+                  obj.addEventListener(evt, fnc, false);
+                  return true;
+              } else if (obj.attachEvent) { // Microsoft model
+                  return obj.attachEvent('on' + evt, fnc);
+              }
+          }
+          var getRandomColour = function() {
+              var letters = '0123456789ABCDEF'.split('');
+              var colour = '#';
+              for (var i = 0; i < 6; i++ ) {
+                  colour += letters[Math.round(Math.random() * 15)];
+              }
+              return colour;
+          }
+
+          var socket = io.connect('http://localhost:3000');
+          var chat = document.querySelector("#chat");
+          var input = document.querySelector("#input");
+          var name = document.querySelector("#name");
+          var users = document.querySelector("#users");
+          var selectedUser = null;
+          var id = null;
+          var colour = getRandomColour();
+
+          // Send message to server.
+          var send = function(message) {
+            var userName = name.value === '' ? '' : '<strong>' + name.value + ': </strong>';
+            socket.emit('send', {
+              message: '<span style="color:' + colour + '">' + userName + message + '</span>',
+              userName: name.value,
+              toUser: users.value,
+              fromUser: id
+            });
+          }
+
+          // Display message from server.
+          var display = function(message) {
+            chat.innerHTML = chat.innerHTML + message + '<br />';
+            chat.scrollTop = chat.scrollHeight;
+          }
+
+          // Send messages to others.
+          addEventListener(input, "keydown", function(e) {
+            // The Enter Key.
+            if(e.keyCode === 13) {
+              send(input.value);
+              input.value = "";
+            }
+          });
+
+          // Save who you are talking to whenever user list gets refreshed.
+          addEventListener(users, "change", function(e) {
+            selectedUser = users.value;
+          });
+
+          socket.on('welcome', function(data) {
+            id = data.id;
+            display(data.message);
+            input.removeAttribute("disabled");
+            input.focus();
+          })
+          .on('receive', function(data) {
+            display(data.message);
+          })
+          .on('users', function(data) {
+            var html = '<option value="">all</option>';
+            for(var i = 0; i < data.length; i++) {
+              var user = data[i];
+              if(id != user.id) {
+                var userName = user.name ? user.name : 'user' + (i + 1);
+                var selected = user.id === selectedUser ? ' selected="selected"': '';
+                html += '<option value="' + user.id + '"' + selected + '>' + userName + '</option>';
+              }
+            }
+            users.innerHTML = html;
+          });
+        })();
+      }
+    </script>
+    </body>
+</html>
