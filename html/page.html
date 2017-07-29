@@ -1,17 +1,17 @@
 <!doctype html>
 <html>
     <head>
-        <link rel="stylesheet" type="text/css" href="styles.css">
+        <link rel="stylesheet" type="text/css" href="../css/styles.css">
     </head>
     <body>
-        <section>
-          <div id="chat"></div>
+        <div id="chat"></div>
+        <div id="input-area">
           <input type="text" id="name" placeholder="your name" />
-          <input type="text" id="input" disabled="disabled" />
+          <input type="text" id="input" class="input-box" disabled="disabled" />
           <select id="users">
             <option value="">all</option>
           </select>
-        </section>
+        </div>
         <script src="/socket.io/socket.io.js"></script>
     <script>
       window.onload = function() {
