@@ -1,16 +1,18 @@
 <!doctype html>
 <html>
     <head>
-        <link rel="stylesheet" type="text/css" href="styles.css">
+        <link rel="stylesheet" type="text/css" href="/styles.css">
     </head>
     <body>
         <div id="container">
           <div id="chat"></div>
-          <div id="chat-rooms"></div>
+          <div id="chat-rooms">
+          <!--  <div class="room active">room 1</div> -->
+          </div>
         </div>
         <div id="input-area">
           <input type="text" id="name" placeholder="your name" />
-          <input type="text" id="input" class="input-box" disabled="disabled" />
+          <textarea type="text" id="input" class="input-box" disabled="disabled"></textarea>
           <select id="users">
             <option value="">all</option>
           </select>
@@ -43,10 +45,12 @@
           var input = document.querySelector("#input");
           var name = document.querySelector("#name");
           var users = document.querySelector("#users");
-          var selectedUser = null;
-          var id = null;
-          var colour = getRandomColour();
-          var oldName = "";
+
+          var selectedUser = null;  // For personal messaging a specific user.
+          var id = null;  // Unique ID used to identify the user.
+          var colour = getRandomColour(); // The colour that the user is identified by.
+          var currentRoom = ""; // The current room the user is in.
+          var oldName = ""; // The old name used before changing it.
 
           // Send message to server.
           var send = function(message) {
@@ -89,6 +93,7 @@
             id = data.id;
             name.value = 'Guest' + data.numID;
             oldName = name.value;
+            currentRoom = data.chatRoom;
             display(data.message);
             input.removeAttribute("disabled");
             input.focus();
@@ -109,14 +114,41 @@
             users.innerHTML = html;
           })
           .on('rooms', function(data) {
-            var html = "";
             for(var i = 0; i < data.length; i++) {
-              html += '<p>' + data[i] + '</p>';
+              var roomDiv = document.createElement('div');
+              roomDiv.className = "room";
+              roomDiv.innerHTML = data[i];
+
+              if(i === 0) {
+                roomDiv.className = "room active";
+                currentRoom = roomDiv.innerHTML;
+              }
+
+              addEventListener(roomDiv, "click", function(e) {
+                this.className = "room active";
+                currentRoom = this.innerHTML;
+
+                // Set all other siblings to non-active.
+                var index = this.parentNode.firstChild;
+                for(; index; index = index.nextSibling) {
+                  if(index.nodeType == 1 && index != this) {
+                    index.className = "room";
+                  }
+                }
+                socket.emit('change-room', { name: name.value, colour: colour, room: this.innerHTML });
+              });
+
+              chatRooms.appendChild(roomDiv);
             }
-            chatRooms.innerHTML = html;
           })
           .on('update-name', function(data) {
             display('<span style="color:' + data.colour + '">' + data.oldName + ' has changed their name to ' + data.newName + '</span>');
+          })
+          .on('leave-room', function(data) {
+            display('<span style="color:' + data.colour + '">' + data.name + ' has left ' + currentRoom + '</span>');
+          })
+          .on('join-room', function(data) {
+            display('<span style="color:' + data.colour + '">' + data.name + ' has joined ' + currentRoom + '</span>');
           });
         })();
       }

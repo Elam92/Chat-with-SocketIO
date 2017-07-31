@@ -5,17 +5,13 @@ var users = [];
 var port = 3000;
 var html = fs.readFileSync(__dirname + '/html/page.html', {encoding: 'utf8'});
 var css = fs.readFileSync(__dirname + '/css/styles.css', {encoding: 'utf8'});
-var chatRooms = ["all", "room 1"];
+var chatRooms = ["all", "room 1", "room 2"];
 var numUsers = 0;
 
 var sendUsers = function() {
 	io.sockets.emit('users', users.map(function(user) {
 		return { id: user.id, name: user.userName };
 	}));
-}
-
-var sendRooms = function() {
-	io.sockets.emit('rooms', chatRooms);
 }
 
 var app = http.createServer(function(req, res) {
@@ -42,14 +38,14 @@ io.sockets.on('connection', function(socket) {
 	var id = crypto.randomBytes(20).toString('hex');
 	numUsers++;
 	users.push({ socket: socket, id: id, name: null });
-	socket.emit('welcome', { message: 'Welcome to ' + chatRooms[0] + '!', id: id, numID: numUsers });
+	socket.emit('welcome', { message: 'Welcome to ' + chatRooms[0] + ' Guest' + numUsers + '!', id: id, numID: numUsers, chatRoom : chatRooms[0] });
 
-	// Automatically join a room.
+	// Automatically join a room and send list of available rooms.
 	socket.room = chatRooms[0];
 	socket.join(socket.room);
+	socket.emit('rooms', chatRooms);
 
 	sendUsers();
-	sendRooms();
 
 	// Attach "send" event to everyone.
 	socket.on('send', function(data) {
@@ -71,5 +67,18 @@ io.sockets.on('connection', function(socket) {
 	// Send everyone in the room an update message to a user's name change.
 	.on('change-name', function(data) {
 		socket.broadcast.to(socket.room).emit('update-name', data);
+	})
+	// Sent when user changes rooms.
+	.on('change-room', function(data) {
+		// Notify users in the room that a user has left the room.
+		socket.broadcast.to(socket.room).emit('leave-room', { name: data.name, colour: data.colour });
+
+		// Changing room for user.
+		socket.leave(socket.room);
+		socket.join(data.room);
+		socket.room = data.room;
+
+		// Notify users in the new room that a user has joined the room.
+		socket.broadcast.to(socket.room).emit('join-room', { name: data.name, colour: data.colour });
 	});
 })
