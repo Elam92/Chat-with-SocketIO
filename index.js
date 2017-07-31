@@ -5,11 +5,17 @@ var users = [];
 var port = 3000;
 var html = fs.readFileSync(__dirname + '/html/page.html', {encoding: 'utf8'});
 var css = fs.readFileSync(__dirname + '/css/styles.css', {encoding: 'utf8'});
+var chatRooms = ["all", "room 1"];
+var numUsers = 0;
 
 var sendUsers = function() {
 	io.sockets.emit('users', users.map(function(user) {
 		return { id: user.id, name: user.userName };
 	}));
+}
+
+var sendRooms = function() {
+	io.sockets.emit('rooms', chatRooms);
 }
 
 var app = http.createServer(function(req, res) {
@@ -34,9 +40,17 @@ var setUserName = function(id, name) {
 var io = require('socket.io').listen(app);
 io.sockets.on('connection', function(socket) {
 	var id = crypto.randomBytes(20).toString('hex');
+	numUsers++;
 	users.push({ socket: socket, id: id, name: null });
-	socket.emit('welcome', { message: 'Welcome!', id: id });
+	socket.emit('welcome', { message: 'Welcome to ' + chatRooms[0] + '!', id: id, numID: numUsers });
+
+	// Automatically join a room.
+	socket.room = chatRooms[0];
+	socket.join(socket.room);
+
 	sendUsers();
+	sendRooms();
+
 	// Attach "send" event to everyone.
 	socket.on('send', function(data) {
 		if(data.userName !== '') {
@@ -50,8 +64,12 @@ io.sockets.on('connection', function(socket) {
 				}
 			});
 		} else {
-			// Send message to everyone.
-			io.sockets.emit('receive', data);
+			// Send message to everyone in the room.
+			io.sockets.in(socket.room).emit('receive', data);
 		}
+	})
+	// Send everyone in the room an update message to a user's name change.
+	.on('change-name', function(data) {
+		socket.broadcast.to(socket.room).emit('update-name', data);
 	});
 })

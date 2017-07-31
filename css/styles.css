@@ -3,12 +3,26 @@
 	height: 50px;
 }
 
-#chat {
-	text-align: center;
-	width: 500px;
+#container {
+	position: relative;
+	display: flex;
+	width:  80%;
 	height: 500px;
 	margin: auto;
 	border: 2px solid black;
+}
+
+#chat {
+	float: left;
+	width: 75%;
+	height: 100%;
+}
+
+#chat-rooms {
+	float: left;
+	flex-grow: 1;
+	height: 100%;
+	border-left: 2px solid black;
 }
 
 #input-area {

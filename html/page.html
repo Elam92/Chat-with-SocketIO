@@ -1,10 +1,13 @@
 <!doctype html>
 <html>
     <head>
-        <link rel="stylesheet" type="text/css" href="../css/styles.css">
+        <link rel="stylesheet" type="text/css" href="styles.css">
     </head>
     <body>
-        <div id="chat"></div>
+        <div id="container">
+          <div id="chat"></div>
+          <div id="chat-rooms"></div>
+        </div>
         <div id="input-area">
           <input type="text" id="name" placeholder="your name" />
           <input type="text" id="input" class="input-box" disabled="disabled" />
@@ -36,12 +39,14 @@
 
           var socket = io.connect('http://localhost:3000');
           var chat = document.querySelector("#chat");
+          var chatRooms = document.querySelector("#chat-rooms");
           var input = document.querySelector("#input");
           var name = document.querySelector("#name");
           var users = document.querySelector("#users");
           var selectedUser = null;
           var id = null;
           var colour = getRandomColour();
+          var oldName = "";
 
           // Send message to server.
           var send = function(message) {
@@ -74,8 +79,16 @@
             selectedUser = users.value;
           });
 
+          // Send message to everyone in room that you updated your name.
+          addEventListener(name, "change", function(e) {
+            socket.emit('change-name', { oldName: oldName, newName: name.value, colour: colour});
+            oldName = name.value;
+          });
+
           socket.on('welcome', function(data) {
             id = data.id;
+            name.value = 'Guest' + data.numID;
+            oldName = name.value;
             display(data.message);
             input.removeAttribute("disabled");
             input.focus();
@@ -94,6 +107,16 @@
               }
             }
             users.innerHTML = html;
+          })
+          .on('rooms', function(data) {
+            var html = "";
+            for(var i = 0; i < data.length; i++) {
+              html += '<p>' + data[i] + '</p>';
+            }
+            chatRooms.innerHTML = html;
+          })
+          .on('update-name', function(data) {
+            display('<span style="color:' + data.colour + '">' + data.oldName + ' has changed their name to ' + data.newName + '</span>');
           });
         })();
       }
