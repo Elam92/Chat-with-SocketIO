@@ -4,25 +4,37 @@
         <link rel="stylesheet" type="text/css" href="/styles.css">
     </head>
     <body>
-        <div id="container">
-          <div id="chat"></div>
-          <div id="chat-rooms">
-          <!--  <div class="room active">room 1</div> -->
+      <div id="blocker" class="blocker">
+        <div id="create-room-dialog">
+          <input type="text" id="create-room-input" placeholder="Enter Room Name"></input>
+          <div>
+            <div id="create-room" class="reg-button">Create</div>
+            <div id="cancel-create" class="reg-button">Cancel</div> 
           </div>
         </div>
-        <div id="input-area">
-          <input type="text" id="name" placeholder="your name" />
-          <textarea type="text" id="input" class="input-box" disabled="disabled"></textarea>
-          <select id="users">
-            <option value="">all</option>
-          </select>
+      </div>
+      <div id="container">
+        <div id="chat"></div>
+        <div id="chat-rooms">
+        <!--  <div class="room active">room 1</div>
+          <div class="room">room 2</div>
+          -->
         </div>
-        <script src="/socket.io/socket.io.js"></script>
+      </div>
+      <div id="input-area">
+        <input type="text" id="name" placeholder="your name" />
+        <textarea type="text" id="input" class="input-box" disabled="disabled"></textarea>
+        <select id="users">
+          <option value="">all</option>
+        </select>
+        <div id="create-room-button" class="reg-button">Create Room</div>
+      </div>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
       window.onload = function() {
         var Chat = (function() {
 
-          var addEventListener = function(obj, evt, fnc) {
+          var addEventListener = function myAddEventListener(obj, evt, fnc) {
               if (obj.addEventListener) { // W3C model
                   obj.addEventListener(evt, fnc, false);
                   return true;
@@ -30,7 +42,7 @@
                   return obj.attachEvent('on' + evt, fnc);
               }
           }
-          var getRandomColour = function() {
+          var getRandomColour = function getRandomColour() {
               var letters = '0123456789ABCDEF'.split('');
               var colour = '#';
               for (var i = 0; i < 6; i++ ) {
@@ -39,12 +51,44 @@
               return colour;
           }
 
+          var createRooms = function createRooms(data) {
+            chatRooms.innerHTML = '';
+            for(var i = 0; i < data.length; i++) {
+              var roomDiv = document.createElement('div');
+              roomDiv.className = "room";
+              roomDiv.innerHTML = data[i];
+
+              if(i === 0) {
+                roomDiv.className = "room active";
+                currentRoom = roomDiv.innerHTML;
+              }
+
+              addEventListener(roomDiv, "click", function(e) {
+                this.className = "room active";
+                currentRoom = this.innerHTML;
+
+                // Set all other siblings to non-active.
+                var index = this.parentNode.firstChild;
+                for(; index; index = index.nextSibling) {
+                  if(index.nodeType == 1 && index != this) {
+                    index.className = "room";
+                  }
+                }
+                socket.emit('change-room', { name: name.value, colour: colour, room: this.innerHTML });
+              });
+
+              chatRooms.appendChild(roomDiv);
+            }
+          }
+
           var socket = io.connect('http://localhost:3000');
           var chat = document.querySelector("#chat");
           var chatRooms = document.querySelector("#chat-rooms");
           var input = document.querySelector("#input");
           var name = document.querySelector("#name");
           var users = document.querySelector("#users");
+          var blocker = document.getElementById("blocker");
+          var inputNewRoom = document.getElementById("create-room-input");
 
           var selectedUser = null;  // For personal messaging a specific user.
           var id = null;  // Unique ID used to identify the user.
@@ -78,6 +122,24 @@
             }
           });
 
+          // Show the Create Room Dialog.
+          addEventListener(document.getElementById("create-room-button"), "click", function(e) {
+            blocker.style.visibility = "visible";
+          });
+
+          // Create room and emit.
+          addEventListener(document.getElementById("create-room"), "click", function(e) {
+            socket.emit('create-room', { roomName: inputNewRoom.value });
+            inputNewRoom.value = "";
+            blocker.style.visibility = "hidden"; 
+          });
+
+          // Cancel the Create Room Dialog.
+          addEventListener(document.getElementById("cancel-create"), "click", function(e) {
+            inputNewRoom.value = "";
+            blocker.style.visibility = "hidden";
+          });
+
           // Save who you are talking to whenever user list gets refreshed.
           addEventListener(users, "change", function(e) {
             selectedUser = users.value;
@@ -85,7 +147,7 @@
 
           // Send message to everyone in room that you updated your name.
           addEventListener(name, "change", function(e) {
-            socket.emit('change-name', { oldName: oldName, newName: name.value, colour: colour});
+            socket.emit('change-name', { oldName: oldName, newName: name.value, colour: colour });
             oldName = name.value;
           });
 
@@ -100,6 +162,7 @@
           })
           .on('receive', function(data) {
             display(data.message);
+            console.log("SDLFJ: " + data.message);
           })
           .on('users', function(data) {
             var html = '<option value="">all</option>';
@@ -114,35 +177,13 @@
             users.innerHTML = html;
           })
           .on('rooms', function(data) {
-            for(var i = 0; i < data.length; i++) {
-              var roomDiv = document.createElement('div');
-              roomDiv.className = "room";
-              roomDiv.innerHTML = data[i];
-
-              if(i === 0) {
-                roomDiv.className = "room active";
-                currentRoom = roomDiv.innerHTML;
-              }
-
-              addEventListener(roomDiv, "click", function(e) {
-                this.className = "room active";
-                currentRoom = this.innerHTML;
-
-                // Set all other siblings to non-active.
-                var index = this.parentNode.firstChild;
-                for(; index; index = index.nextSibling) {
-                  if(index.nodeType == 1 && index != this) {
-                    index.className = "room";
-                  }
-                }
-                socket.emit('change-room', { name: name.value, colour: colour, room: this.innerHTML });
-              });
-
-              chatRooms.appendChild(roomDiv);
-            }
+            createRooms(data);
           })
           .on('update-name', function(data) {
             display('<span style="color:' + data.colour + '">' + data.oldName + ' has changed their name to ' + data.newName + '</span>');
+          })
+          .on('update-rooms', function(data) {
+            createRooms(data);
           })
           .on('leave-room', function(data) {
             display('<span style="color:' + data.colour + '">' + data.name + ' has left ' + currentRoom + '</span>');

@@ -80,5 +80,14 @@ io.sockets.on('connection', function(socket) {
 
 		// Notify users in the new room that a user has joined the room.
 		socket.broadcast.to(socket.room).emit('join-room', { name: data.name, colour: data.colour });
+		io.sockets.emit('receive', { message: '<span style="color:' + data.colour + '"> Welcome to bacon ' + socket.room + ' ' + data.name + '!</span>' });
+	})
+	// Sent when a user creates a new room.
+	.on('create-room', function(data) {
+		// Notify all users that a new room was created.
+		if(chatRooms.indexOf(data.roomName) < 0) {
+			chatRooms.push(data.roomName);
+			io.sockets.emit('rooms', chatRooms);
+		}
 	});
 })

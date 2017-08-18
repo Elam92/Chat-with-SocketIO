@@ -1,7 +1,39 @@
+body {
+	margin: auto;
+}
+
+.blocker {
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	top: 0%;
+	z-index: 10;
+	background-color: rgba(28, 28, 28, 0.9);
+	visibility: hidden;
+}
+
+.reg-button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	margin-left: 10px;
+	width: 100px;
+	height: 50px;
+	font-size: 18px;
+	color: white;
+	border: 1px solid black;
+	background: rgb(96, 96, 96);
+}
+
+.reg-button:active {
+	background: rgb(128,128,128);
+}
+
 .room {
 	text-align: center;
 	font-size: 22px;
 	border: 1px solid black;
+	border-top-width: 0px;
 }
 
 .room.active, .room:active {
@@ -21,8 +53,28 @@
 	display: flex;
 	width:  80%;
 	height: 500px;
-	margin: auto;
+	margin: 8px auto;
 	border: 2px solid black;
+}
+
+#create-room-dialog {
+	position: relative;
+	top: 50%;
+	left: 50%;
+
+	width: 300px;
+	height: 150px;
+	margin-left: -150px;
+	margin-top: -75px;
+
+	text-align: center;
+	background-color: white;
+	border-radius: 10px;
+}
+#create-room-input {
+	margin: 15px 10px;
+	padding: 10px;
+	font-size: 18px;
 }
 
 #chat {
