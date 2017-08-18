@@ -48,6 +48,15 @@ body {
 	vertical-align: middle;
 }
 
+.unselectable {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
 #container {
 	position: relative;
 	display: flex;
@@ -81,13 +90,15 @@ body {
 	float: left;
 	width: 75%;
 	height: 100%;
+	overflow-y: auto; 
 }
 
 #chat-rooms {
 	float: left;
-	flex-grow: 1;
+	width: 25%;
 	height: 100%;
 	border-left: 2px solid black;
+	overflow-y: auto;
 }
 
 #input-area {

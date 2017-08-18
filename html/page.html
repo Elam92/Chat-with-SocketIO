@@ -6,7 +6,7 @@
     <body>
       <div id="blocker" class="blocker">
         <div id="create-room-dialog">
-          <input type="text" id="create-room-input" placeholder="Enter Room Name"></input>
+          <input type="text" id="create-room-input" placeholder="Enter Room Name" maxlength="12"></input>
           <div>
             <div id="create-room" class="reg-button">Create</div>
             <div id="cancel-create" class="reg-button">Cancel</div> 
@@ -22,7 +22,7 @@
         </div>
       </div>
       <div id="input-area">
-        <input type="text" id="name" placeholder="your name" />
+        <input type="text" id="name" placeholder="your name" maxlength="12"/>
         <textarea type="text" id="input" class="input-box" disabled="disabled"></textarea>
         <select id="users">
           <option value="">all</option>
@@ -55,26 +55,28 @@
             chatRooms.innerHTML = '';
             for(var i = 0; i < data.length; i++) {
               var roomDiv = document.createElement('div');
-              roomDiv.className = "room";
+              roomDiv.className = "room unselectable";
               roomDiv.innerHTML = data[i];
 
               if(i === 0) {
-                roomDiv.className = "room active";
+                roomDiv.className = "room active unselectable";
                 currentRoom = roomDiv.innerHTML;
               }
 
               addEventListener(roomDiv, "click", function(e) {
-                this.className = "room active";
-                currentRoom = this.innerHTML;
+                if(this.className !== "room active unselectable") {
+                  this.className = "room active unselectable";
+                  currentRoom = this.innerHTML;
 
-                // Set all other siblings to non-active.
-                var index = this.parentNode.firstChild;
-                for(; index; index = index.nextSibling) {
-                  if(index.nodeType == 1 && index != this) {
-                    index.className = "room";
+                  // Set all other siblings to non-active.
+                  var index = this.parentNode.firstChild;
+                  for(; index; index = index.nextSibling) {
+                    if(index.nodeType == 1 && index != this) {
+                      index.className = "room unselectable";
+                    }
                   }
+                  socket.emit('change-room', { name: name.value, colour: colour, room: this.innerHTML });
                 }
-                socket.emit('change-room', { name: name.value, colour: colour, room: this.innerHTML });
               });
 
               chatRooms.appendChild(roomDiv);
