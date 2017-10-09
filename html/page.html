@@ -100,9 +100,9 @@
 
           // Send message to server.
           var send = function(message) {
-            var userName = name.value === '' ? '' : '<strong>' + name.value + ': </strong>';
             socket.emit('send', {
-              message: '<span style="color:' + colour + '">' + userName + message + '</span>',
+              message: message,
+              colour: colour,
               userName: name.value,
               toUser: users.value,
               fromUser: id
@@ -110,8 +110,24 @@
           }
 
           // Display message from server.
-          var display = function(message) {
-            chat.innerHTML = chat.innerHTML + message + '<br />';
+          var display = function(user, message, colour) {
+            var newMessage = document.createElement("span");
+            newMessage.style.color = colour;
+
+            // Show sender's name if supplied one.
+            if(user !== '') {
+              var userName = document.createElement("strong");
+              userName.innerHTML = user + ': ';
+              newMessage.appendChild(userName);
+            }
+
+            // Escaping HTML.
+            var content = document.createTextNode(message);
+            var lineBreak = document.createElement("br");
+            newMessage.appendChild(content)
+            newMessage.appendChild(lineBreak);
+
+            chat.appendChild(newMessage);
             chat.scrollTop = chat.scrollHeight;
           }
 
@@ -158,12 +174,12 @@
             name.value = 'Guest' + data.numID;
             oldName = name.value;
             currentRoom = data.chatRoom;
-            display(data.message);
+            display('', data.message);
             input.removeAttribute("disabled");
             input.focus();
           })
           .on('receive', function(data) {
-            display(data.message);
+            display(data.userName, data.message, data.colour);
             console.log("SDLFJ: " + data.message);
           })
           .on('users', function(data) {
@@ -182,16 +198,16 @@
             createRooms(data);
           })
           .on('update-name', function(data) {
-            display('<span style="color:' + data.colour + '">' + data.oldName + ' has changed their name to ' + data.newName + '</span>');
+            display('', data.oldName + ' has changed their name to ' + data.newName, data.colour);
           })
           .on('update-rooms', function(data) {
             createRooms(data);
           })
           .on('leave-room', function(data) {
-            display('<span style="color:' + data.colour + '">' + data.name + ' has left ' + currentRoom + '</span>');
+            display('', data.name + ' has left ' + currentRoom + '.',data.colour);
           })
           .on('join-room', function(data) {
-            display('<span style="color:' + data.colour + '">' + data.name + ' has joined ' + currentRoom + '</span>');
+            display('', data.name + ' has joined ' + currentRoom + '.', data.colour);
           });
         })();
       }
