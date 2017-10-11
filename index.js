@@ -89,5 +89,11 @@ io.sockets.on('connection', function(socket) {
 			chatRooms.push(data.roomName);
 			io.sockets.emit('rooms', chatRooms);
 		}
+	})
+	// Update number of users when a disconnection occurs.
+	.on('disconnect', function(data) {
+		var i = users.indexOf(socket);
+		users.splice(i, 1);
+		numUsers--;
 	});
 })
