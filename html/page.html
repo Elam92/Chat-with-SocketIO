@@ -112,6 +112,7 @@
           // Display message from server.
           var display = function(user, message, colour) {
             var newMessage = document.createElement("span");
+            newMessage.className = "chat-message";
             newMessage.style.color = colour;
 
             // Show sender's name if supplied one.

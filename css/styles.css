@@ -12,6 +12,11 @@ body {
 	visibility: hidden;
 }
 
+.chat-message {
+	width: 100%;
+	word-wrap: break-word;
+}
+
 .reg-button {
 	display: inline-flex;
 	justify-content: center;
