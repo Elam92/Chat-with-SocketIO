@@ -37,7 +37,7 @@ var io = require('socket.io').listen(app);
 io.sockets.on('connection', function(socket) {
 	var id = crypto.randomBytes(20).toString('hex');
 	numUsers++;
-	users.push({ socket: socket, id: id, name: null });
+	users.push({ socket: socket, id: id, userName: 'Guest'+numUsers });
 	socket.emit('welcome', { message: 'Welcome to ' + chatRooms[0] + ' Guest' + numUsers + '!', id: id, numID: numUsers, chatRoom : chatRooms[0] });
 
 	// Automatically join a room and send list of available rooms.
@@ -49,9 +49,6 @@ io.sockets.on('connection', function(socket) {
 
 	// Attach "send" event to everyone.
 	socket.on('send', function(data) {
-		if(data.userName !== '') {
-			setUserName(id, data.userName);
-		}
 		if(data.toUser !== '') {
 			// Send to the owner and target of the message.
 			users.forEach(function(user) {
@@ -93,7 +90,9 @@ io.sockets.on('connection', function(socket) {
 	// Update number of users when a disconnection occurs.
 	.on('disconnect', function(data) {
 		var i = users.indexOf(socket);
-		users.splice(i, 1);
+		var target = users.splice(i, 1);
 		numUsers--;
+		socket.broadcast.to(socket.room).emit('leave-room', { name: target[0].userName, colour: "red" });
+		sendUsers();
 	});
 })

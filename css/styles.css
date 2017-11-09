@@ -17,6 +17,11 @@ body {
 	word-wrap: break-word;
 }
 
+.section-header {
+	text-align: center;
+	font-size: 28px;
+}
+
 .reg-button {
 	display: inline-flex;
 	justify-content: center;
@@ -37,8 +42,6 @@ body {
 .room {
 	text-align: center;
 	font-size: 22px;
-	border: 1px solid black;
-	border-top-width: 0px;
 }
 
 .room.active, .room:active {
@@ -62,6 +65,11 @@ body {
 	user-select: none;
 }
 
+.user {
+	text-align: center;
+	font-size: 22px;
+}
+
 #container {
 	position: relative;
 	display: flex;
@@ -69,6 +77,24 @@ body {
 	height: 500px;
 	margin: 8px auto;
 	border: 2px solid black;
+}
+
+#side-container {
+	display: flex;
+	flex-flow: column;
+	width: 25%;
+	height: 100%;
+	border-left: 2px solid black;
+}
+
+#side-container div {
+	border: 1px solid black;
+	border-left-width: 0px;
+	border-right-width: 0px;
+}
+
+#side-container div .room, #side-container div .user {
+	border-top-width: 0px;
 }
 
 #create-room-dialog {
@@ -99,10 +125,9 @@ body {
 }
 
 #chat-rooms {
+	width: 100%;
+	height: 50%;
 	float: left;
-	width: 25%;
-	height: 100%;
-	border-left: 2px solid black;
 	overflow-y: auto;
 }
 
@@ -111,4 +136,10 @@ body {
 	width: 100%;
 	margin: 0 auto;
 	text-align: center;
+}
+
+#users-list {
+	width: 100%;
+	height: 50%;
+	overflow-y: auto;
 }
